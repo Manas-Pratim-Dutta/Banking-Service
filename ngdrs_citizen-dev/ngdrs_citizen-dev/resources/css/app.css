@@ -1,0 +1,259 @@
+@import "tailwindcss";
+@import "../../node_modules/datatables.net-dt/css/dataTables.dataTables.css";
+@import "./vendor-overrides.css";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans:
+        ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-heading: "Playfair Display";
+    --font-merri: "Merriweather";
+
+    --text-xs2: 9.1875px;
+    --text-sm2: 11.9px;
+    --text-base2: 13.125px;
+    --text-md2: 14px;
+    --text-lg2: 17.5px;
+
+    --color-grey: #737b8b;
+    --color-offwhite: #ffffff;
+    --color-primary: #ff803b;
+    --color-background: #fff4cd;
+    --color-backgroundlight: #fff9e4;
+    --color-success: #25ae53;
+    --color-branddark: #484443;
+}
+
+@keyframes rotation {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotationBack {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+@layer components {
+    .collapsible {
+        @apply opacity-0 overflow-hidden transition-all duration-500 ease-in-out;
+        max-height: 0;
+    }
+
+    .collapsible-open {
+        @apply opacity-100;
+        max-height: 1000px;
+    }
+
+    .loader {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: inline-block;
+        position: relative;
+        border: 3px solid;
+        border-color: white white transparent;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+    }
+
+    .loader::after {
+        content: "";
+        box-sizing: border-box;
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border: 3px solid;
+        border-color: transparent var(--color-primary) var(--color-primary);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        animation: rotationBack 0.5s linear infinite;
+        transform-origin: center;
+    }
+
+    .card {
+        @apply max-w-7xl mx-auto bg-white rounded-md shadow-sm border border-gray-100 p-8 mb-4;
+    }
+
+    .card-hidden {
+        display: none;
+    }
+
+    .card-visible {
+        display: block;
+    }
+
+    .dag-tab {
+        background: #f9f9f9;
+        color: #6b7280;
+        border-color: #e5e7eb;
+    }
+    .dag-tab:hover {
+        background: #f3f4f6;
+        color: #111827;
+        border-color: #d1d5db;
+    }
+    .dag-tab.active {
+        background: #ff803b;
+        color: #fff;
+        border-color: #ff803b;
+    }
+
+    .readonly-field {
+        @apply bg-gray-100 text-gray-500 cursor-not-allowed pointer-events-none;
+    }
+}
+
+:root {
+    --paper: #fbf7ef;
+    --paper-edge: #f1e9d8;
+    --line: #dcceb2;
+    --ink: #2b2622;
+    --ink-soft: #6b6155;
+    --terracotta: #b8541b;
+    --terracotta-deep: #8f3f14;
+    --gold: #96702c;
+    --stamp-bg: #f4e9d4;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 720px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.record-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+    margin-bottom: 24px;
+}
+
+.record-head {
+    padding: 18px 22px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.locality {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 6px;
+    column-gap: 12px;
+}
+
+.locality div {
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+.locality div b {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 1px;
+}
+
+.dag-patta-strip {
+    background: var(--terracotta);
+    padding: 14px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.dag-patta-strip .item {
+    color: #fff;
+}
+
+.dag-patta-strip .item .num-label {
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    opacity: 0.85;
+}
+
+.dag-patta-strip .item .num-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.dag-patta-strip .sep {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.35);
+    margin: 0 18px;
+}
+
+.record-body {
+    padding: 18px 22px 20px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--paper-edge);
+}
+
+.row:last-of-type {
+    border-bottom: none;
+}
+
+.row .label {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+}
+
+.row .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: right;
+}
+
+.valuation-block {
+    margin-top: 14px;
+    background: var(--stamp-bg);
+    border: 1px dashed var(--line);
+    border-radius: 5px;
+    padding: 12px 16px;
+}
+
+.valuation-block .row {
+    border-bottom: 1px solid rgba(150, 112, 44, 0.18);
+}
+
+.valuation-block .row:last-child {
+    border-bottom: none;
+    padding-top: 10px;
+}
+
+.valuation-block .row:last-child .label {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.valuation-block .row:last-child .value {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--terracotta-deep);
+}

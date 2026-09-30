@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ngdrs_citizen_app
+    restart: unless-stopped
+    working_dir: /var/www
+    env_file:
+      - .env
+    volumes:
+      - public_data:/var/www/public
+    networks:
+      - ngdrs-network
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ngdrs-public-assets-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: ngdrs_citizen_nginx
+    restart: unless-stopped
+    ports:
+      - "8150:80"
+    volumes:
+      - public_data:/var/www/public:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - ngdrs-network
+
+networks:
+  ngdrs-network:
+    external: true
+
+volumes:
+  public_data:

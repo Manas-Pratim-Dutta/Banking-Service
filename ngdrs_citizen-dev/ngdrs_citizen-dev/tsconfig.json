@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    "strict": false,
+    "jsx": "react-jsx",
+
+    "sourceMap": true,
+
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
+    "types": ["vite/client"],
+
+    "skipLibCheck": true
+  },
+  "include": [
+    "resources/**/*.ts",
+    "resources/**/*.tsx"
+  ]
+}

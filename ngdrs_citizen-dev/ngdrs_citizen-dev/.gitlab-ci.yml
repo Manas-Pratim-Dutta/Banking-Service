@@ -1,0 +1,100 @@
+##
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "stage"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+default:
+  before_script:
+    - echo "Using GitLab shell runner."
+    - echo "SSH keys must already be configured for the deploy user on target hosts."
+
+stages:
+  - build
+  - deploy
+
+variables:
+  GIT_STRATEGY: clone
+
+deploy_stage_docker:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "stage"'
+      when: manual
+  script:
+    - |
+      set -euo pipefail
+
+      if [ -z "${REPO_URL:-}" ]; then
+        REPO_URL="git@$CI_SERVER_HOST:$CI_PROJECT_PATH.git"
+      fi
+
+      for NAME in STAGE_HOSTS STAGE_PATH STAGE_DEPLOY_USER; do
+        if [ -z "${!NAME:-}" ]; then
+          echo "ERROR: Required CI/CD variable $NAME is not set."
+          exit 1
+        fi
+      done
+
+      echo "Deploying stage-docker to stage hosts: $STAGE_HOSTS"
+      TARGET_HOSTS="${STAGE_HOSTS//,/ }"
+
+      for HOST in $TARGET_HOSTS; do
+        echo "---- Deploying to $STAGE_DEPLOY_USER@$HOST ----"
+        ssh "$STAGE_DEPLOY_USER@$HOST" "DEPLOY_PATH='$STAGE_PATH' REPO_URL='$REPO_URL' bash -s" <<'REMOTE_SCRIPT'
+      set -euo pipefail
+
+      CONFIG_DIR="${DEPLOY_PATH%/}/.deploy-config"
+      if [ ! -d "$DEPLOY_PATH" ]; then
+        echo "ERROR: Deployment directory does not exist: $DEPLOY_PATH"
+        echo "Create it on the target host and grant the deploy user access before running this job."
+        exit 1
+      fi
+      if [ ! -w "$DEPLOY_PATH" ]; then
+        echo "ERROR: Deployment directory is not writable by $(id -un): $DEPLOY_PATH"
+        exit 1
+      fi
+      mkdir -p "$CONFIG_DIR"
+
+      if [ ! -d "$DEPLOY_PATH/.git" ]; then
+        echo "Cloning stage for initial deployment..."
+        git clone --branch stage --single-branch "$REPO_URL" "$DEPLOY_PATH"
+      fi
+
+      cd "$DEPLOY_PATH"
+      git config --global --add safe.directory "$DEPLOY_PATH"
+      # Use the CI-supplied deploy URL even when this checkout already existed.
+      git remote set-url origin "$REPO_URL"
+
+      # Keep stage-specific files outside the Git working tree.
+      for FILE in .env docker-compose.yml; do
+        if [ ! -f "$CONFIG_DIR/$FILE" ] && [ -f "$FILE" ]; then
+          cp -p "$FILE" "$CONFIG_DIR/$FILE"
+          echo "Created protected config backup: $CONFIG_DIR/$FILE"
+        fi
+      done
+
+      # Clear local config changes so updates from origin/stage-docker cannot block the pull.
+      rm -f .env docker-compose.yml
+      git reset --hard HEAD
+      echo "Pulling latest stage branch..."
+      git fetch origin stage
+      git checkout -B stage origin/stage
+      git reset --hard origin/stage
+
+      for FILE in .env docker-compose.yml; do
+        if [ -f "$CONFIG_DIR/$FILE" ]; then
+          cp -p "$CONFIG_DIR/$FILE" "$FILE"
+          echo "Restored protected config: $FILE"
+        fi
+      done
+
+      echo "Restarting containers..."
+      docker compose down --remove-orphans
+      docker compose up -d --build
+
+      echo "Deployment complete."
+      REMOTE_SCRIPT
+      done
+
+      echo "Stage deployment completed on all hosts."
